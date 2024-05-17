@@ -29,30 +29,30 @@ message:   .asciz "Need To Implement\n"
 createHashTable:
 	addi sp sp -24
 	sw ra 0(sp) 
-	sw s0 4(sp)		 #store size
-	sw s1 8(sp) 	#store hashFunction pointer
-	sw s2 12(sp) 	#store equalFunction pointer
+	sw s0 4(sp)		 
+	sw s1 8(sp) 
+	sw s2 12(sp) 
 	sw s3 16(sp)	 #for the newTable
 	sw s4 20(sp) 	#for the hashtable pointer
-	mv s0 a0
-	mv s1 a1
-	mv s2 a2		#change from t0 to s0 so it doesn't get trashed....
-	li a0 20 		#sizeofHashtable
+	mv s0 a0		 #store size	
+	mv s1 a1		#store hashFunction pointer
+	mv s2 a2		#store equalFunction pointer
+	li a0 20 		#sizeofHashtable as argument
 	j malloc 		#malloc
 	mv s3 a0 		#HashTable *newTable = malloc(sizeof(HashTable))
 	sw s0 12(s3)	#newTable -> size = size
 	sw x0 16(s3)	#newTable -> used = 0
-	li t2 12
-	mul t2 t2 s0
-	mv a0 t2		#argument is hashbucket * size
+	li t2 4			#size of hashbucket pointer
+	mul t2 t2 s0	#hashbucket*size
+	mv a0 t2		#argument is size(hashbucket *) * size
 	j malloc		#malloc HashBucket
-	sw a0 8(s4)		#newTable->data
+	sw a0 8(s3)		#newTable->data = malloc(sizeof(struct HashBucket *) * size)
 	mv t0 x0			#i=0
 	loop_start: 
-	lw t2 8(s4) 		#load newTable -> data (gets data pointer)
-	slli t3 t0 2 		#"multiply" by 4 for storage, store in t3
-	add t3 t2 t3 		#add the offset
-	mv t3 x0		#store null in the data 
+	lw t2 8(s3) 		#load newTable -> data or *data address
+	slli t3 t0 2 		#"multiply" i by 4 (4 bytes), store in t3
+	add t3 t2 t3 		#add the offset to the data address, store in t3
+	sw x0 0(t3)			#store null in the data ie. *(*data+4i) = NULL
 	addi t0 t0 1 		#increment
 	bge t0 s0 loop_start 	#loop condition
 	sw s1 0(t1)		#newTable->hashFunction = hashFunction;
@@ -77,12 +77,11 @@ insertData:
 	mv s0 a0
 	mv s1 a1
 	mv s2 a2
-	li a0 12
-	j malloc
-	mv s3 a0 		#store the returned malloced space
-					#ie: *newBucket (s3) = malloc...
+	li a0 12		#sizeof(struct HashBucket)
+	j malloc		#malloc that much space
+	mv s3 a0 		#ie: *newBucket (s3) = malloc...
 	lw t1 12(s0) 	#t2 = table -> size
-	mv a0 s1 		#set up parameter of function call
+	mv a0 s1 		#set key up as parameter
 	jalr ra 0(s1)	#run hashFunction on key
 	mv t5 a0		#t5 = hashFunction(key)
 	rem t5 t5 t2	#t5 = ((table->hashFunction)(key)) % table->size;

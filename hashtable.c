@@ -11,7 +11,8 @@ HashTable *createHashTable(int size, unsigned int (*hashFunction)(void *),
   newTable->used = 0;
   newTable->data = malloc(sizeof(struct HashBucket *) * size);
   for (i = 0; i < size; ++i) {
-    newTable->data[i] = NULL;
+    newTable->data[i] = NULL; //this is a double deferennce
+    //ie. *(*data+4i) = NULL
   }
   newTable->hashFunction = hashFunction;
   newTable->equalFunction = equalFunction;
